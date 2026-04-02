@@ -9,13 +9,6 @@ import Vision
 import SwiftUI
 import Combine
 
-// Extension FUORI dalla classe
-extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
-}
-
 class ModelViewModel: ObservableObject {
     @Published var visionModel: VNCoreMLModel?
     @Published var modelURL: URL?
@@ -106,43 +99,7 @@ class ModelViewModel: ObservableObject {
     }
 
     func parseRawYOLOOutput(_ results: [VNCoreMLFeatureValueObservation]) -> [Detection] {
-        guard let first = results.first,
-              let multiArray = first.featureValue.multiArrayValue else { return [] }
-
-        let numBoxes = 8400
-        let numClasses = 80
-        let confidenceThreshold: Float = 0.3
-        var detections: [Detection] = []
-
-        for i in 0..<numBoxes {
-            let cx = multiArray[[0, 0, i] as [NSNumber]].floatValue
-            let cy = multiArray[[0, 1, i] as [NSNumber]].floatValue
-            let w  = multiArray[[0, 2, i] as [NSNumber]].floatValue
-            let h  = multiArray[[0, 3, i] as [NSNumber]].floatValue
-
-            var maxConf: Float = 0
-            var maxClass = 0
-            for c in 0..<numClasses {
-                let conf = multiArray[[0, (4 + c), i] as [NSNumber]].floatValue
-                if conf > maxConf {
-                    maxConf = conf
-                    maxClass = c
-                }
-            }
-
-            guard maxConf >= confidenceThreshold else { continue }
-
-            // YOLOv8 usa coordinate normalizzate 0..640 → dividi per 640
-            // Se già 0..1 salta la divisione
-            let x = CGFloat(cx / 640 - w / 1280)
-            let y = CGFloat(1 - cy / 640 - h / 1280) // flip per Vision (origin bottom-left)
-            let rect = CGRect(x: x, y: y, width: CGFloat(w / 640), height: CGFloat(h / 640))
-
-            let label = cocoClasses[safe: maxClass] ?? "class_\(maxClass)"
-            detections.append(Detection(label: label, confidence: maxConf, boundingBox: rect))
-        }
-
-        return applyNMS(detections)
+        return YOLOParser.parse(results)
     }
 
     func handleDetections(_ results: [VNRecognizedObjectObservation]) {
