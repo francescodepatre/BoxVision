@@ -21,7 +21,7 @@ BoxVision is an iOS application built with SwiftUI that performs on-device objec
 
 | Home | Model Selection | Results |
 |------|----------------|--------|
-| ![Home](images/home.png) | ![Model Selection](images/model_selection.png) | ![Results](images/results.png) |
+| ![Home](images/home.PNG) | ![Model Selection](images/model_selection.PNG) | ![Results](images/results.PNG) |
 
 ## Tech Stack
 
